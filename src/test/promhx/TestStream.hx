@@ -6,6 +6,43 @@ import utest.Assert;
 
 class TestStream {
     public function new(){}
+    public function testPause(){
+        var s1 = new PublicStream<Int>();
+        var expected = 1;
+        var actual = 0;
+        var async = Assert.createAsync(function(){
+            Assert.equals(expected, actual);
+        });
+        s1.then(function(x){
+            actual = x;
+            async();
+        });
+        s1.resolve(1);
+        s1.pause(true);
+        s1.resolve(4);
+
+    }
+
+    public function testPipeError(){
+        var s1 = new PublicStream<Int>();
+        var s2 = new PublicStream<Int>();
+        var expected = 1;
+        var actual = 0;
+        var async = Assert.createAsync(function(){
+            Assert.equals(expected, actual);
+        });
+        s1.then(function(x){
+            throw 'error';
+            return 1;
+        }).errorPipe(function(x){
+            return s2;
+        }).then(function(x){
+            actual = x;
+            async();
+        });
+        s2.resolve(1);
+        s1.resolve(4);
+    }
 
     public function testSimpleFilter(){
         var s1 = new PublicStream<Int>();
@@ -66,7 +103,6 @@ class TestStream {
         });
 
         Assert.isTrue(s.detachStream(s2), "detach should return true");
-        trace(untyped s._update.length);
         s.resolve(1);
 
     }
@@ -280,6 +316,24 @@ class TestStream {
             async();
         });
         s1.resolve(expected1);
+    }
+
+    public function testAsynchronousError(){
+       var s1 = new PublicStream<Int>();
+       var error_thrown = false;
+
+        var async = Assert.createAsync(function(){
+            Assert.isTrue(error_thrown);
+        });
+        s1.throwError(true);
+        s1.then(function(x){
+            return 1;
+        }).catchError(function(x){
+            error_thrown = true;
+            async();
+        });
+
+
     }
 
 }

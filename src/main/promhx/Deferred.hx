@@ -1,44 +1,27 @@
 package promhx;
+import promhx.base.AsyncBase;
 
 @:expose
-class Deferred<T> {
-    var _update : Array<{func: T->Dynamic, error: Dynamic->Void}>;
+class Deferred<T> extends AsyncBase<T> {
 
-    public function new(){
-        this._update = [];
-    }
+    public function new() super();
 
     /**
       The public write interface
      **/
-    public function resolve(val:T){
-        for (u in _update) {
-            if (u.error != null){
-                try u.func(val)
-                catch(e:Dynamic) {
-                }
-            } else {
-                u.func(val);
-            }
-        }
-    }
+    public function resolve(val:T) handleResolve(val);
+
+    inline public function throwError(e:Dynamic) handleError(e);
 
     /**
-      Register callbacks directly to a Deferred instance. 
-     **/
-    public function then<X>(func : T->X, ?error : Dynamic->Void){
-        _update.push({func : func, error: error});
-    }
-
-    /**
-      Returns a promise based on the current deferred instance
+      Returns a new promise based on the current deferred instance
      **/
     public function promise(){
         return new Promise(this);
     }
 
     /**
-      Returns a stream based on the current deferred instance
+      Returns a new stream based on the current deferred instance
      **/
     public function stream(){
         return new Stream(this);
